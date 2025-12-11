@@ -1,0 +1,108 @@
+/* BeneficiosPage Styles */
+
+.beneficios-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f5f5;
+}
+
+/* Skip Link for Accessibility */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #e30613;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 100;
+    border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Page Intro Section */
+.page-intro {
+    background: linear-gradient(135deg, #e30613 0%, #b30510 100%);
+    color: white;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.page-title {
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    margin: 0;
+    opacity: 0.95;
+}
+
+/* Page Content */
+.page-content {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Error Message */
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+    margin-bottom: 1rem;
+}
+
+.error-message p {
+    margin: 0;
+}
+
+/* Page Footer */
+.page-footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 1.5rem 1rem;
+    margin-top: 3rem;
+}
+
+.page-footer p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Tablet and up (768px) */
+@media (min-width: 768px) {
+    .page-header {
+        padding: 3rem 2rem;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .page-content {
+        padding: 3rem 2rem;
+    }
+}
+
+/* Desktop (1024px) */
+@media (min-width: 1024px) {
+    .page-title {
+        font-size: 3rem;
+    }
+}

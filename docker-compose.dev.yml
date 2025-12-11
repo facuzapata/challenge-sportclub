@@ -1,0 +1,49 @@
+# Docker Compose - Development with hot reload
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: sportclub-backend-dev
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+      - "9229:9229" # Debug port
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - SPORTCLUB_API_URL=${SPORTCLUB_API_URL}
+      - API_TIMEOUT=${API_TIMEOUT:-10000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3001}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run start:dev
+    restart: unless-stopped
+    networks:
+      - sportclub-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: sportclub-frontend-dev
+    ports:
+      - "${FRONTEND_PORT:-3001}:3001"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:3000}
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - sportclub-network
+
+networks:
+  sportclub-network:
+    driver: bridge

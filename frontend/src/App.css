@@ -1,0 +1,35 @@
+/* Global App Styles */
+.App {
+    min-height: 100vh;
+}
+
+/* Ensure proper focus visibility for keyboard navigation (WCAG 2.1) */
+*:focus-visible {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Remove default focus styles for mouse users */
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+
+.border-black {
+    --tw-border-opacity: 1;
+    border-color: rgb(0 0 0 / var(--tw-border-opacity, 1));
+}
+
+.text-gray-900 {
+    --tw-text-opacity: 1;
+    color: rgb(17 24 39 / var(--tw-text-opacity, 1));
+}
+
+.text-xs {
+    font-size: .75rem;
+    line-height: 1rem;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}

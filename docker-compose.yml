@@ -1,0 +1,44 @@
+# Docker Compose - Production
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sportclub-backend
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - SPORTCLUB_API_URL=${SPORTCLUB_API_URL}
+      - API_TIMEOUT=${API_TIMEOUT:-30000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3001}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - sportclub-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sportclub-frontend
+    ports:
+      - "${FRONTEND_PORT:-3001}:80"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:3000}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - sportclub-network
+
+networks:
+  sportclub-network:
+    driver: bridge
