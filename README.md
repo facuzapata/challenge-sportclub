@@ -13,24 +13,40 @@ Monorepo que contiene:
 ## Arquitectura
 
 ### Backend (NestJS + TypeScript)
+
+Implementa **Arquitectura Hexagonal** (Ports & Adapters) para máxima independencia del dominio:
+
 ```
 backend/
 ├── src/
-│   ├── domain/           # Entidades y reglas de negocio
-│   ├── application/      # Casos de uso
-│   ├── infrastructure/   # HTTP clients, repositorios
-│   └── presentation/     # Controllers, DTOs, Filters
+│   ├── domain/                    # Núcleo de negocio (sin dependencias)
+│   │   ├── entities/             # Entidades de dominio
+│   │   ├── exceptions/           # Excepciones de negocio
+│   │   └── ports/
+│   │       ├── input/            # Puertos de entrada (casos de uso)
+│   │       └── output/           # Puertos de salida (repositorios, APIs)
+│   ├── application/              # Lógica de aplicación
+│   │   └── services/            # Servicios que implementan puertos de entrada
+│   ├── adapters/                 # Adaptadores externos
+│   │   ├── input/               # Adaptadores de entrada (REST, GraphQL, CLI)
+│   │   │   └── rest/           # Controllers, DTOs
+│   │   └── output/              # Adaptadores de salida (DB, HTTP, etc)
+│   │       └── sportclub/      # Implementaciones Sportclub API
+│   └── beneficios/               # Módulo NestJS (configuración DI)
 ├── Dockerfile
 └── Dockerfile.dev
 ```
 
 **Características:**
-- Clean Architecture (4 capas)
+- Arquitectura Hexagonal (Ports & Adapters)
+- Domain-Driven Design (DDD)
+- Inversión de dependencias
+- Puertos claramente definidos
+- Adaptadores intercambiables
 - Swagger/OpenAPI documentation
 - Manejo robusto de errores
-- Logging detallado
-- Validación de datos
-- 95% test coverage (35 tests)
+- Logging opcional
+- 100% test coverage (35 tests)
 - Timeout handling
 - CORS configurado
 
@@ -423,20 +439,33 @@ docker-compose down
 sportclub/
 ├── backend/
 │   ├── src/
-│   │   ├── application/
-│   │   │   └── use-cases/
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   ├── exceptions/
-│   │   │   └── repositories/
-│   │   ├── infrastructure/
-│   │   │   ├── http/
-│   │   │   └── repositories/
-│   │   ├── presentation/
-│   │   │   ├── controllers/
-│   │   │   ├── dtos/
+│   │   ├── domain/                      # Núcleo de negocio (sin dependencias)
+│   │   │   ├── entities/               # Entidades del dominio
+│   │   │   │   └── beneficio.entity.ts
+│   │   │   ├── exceptions/             # Excepciones de negocio
+│   │   │   │   └── domain.exceptions.ts
+│   │   │   └── ports/                  # Interfaces (contratos)
+│   │   │       ├── input/              # Puertos de entrada
+│   │   │       │   └── beneficios.service.port.ts
+│   │   │       └── output/             # Puertos de salida
+│   │   │           ├── beneficios.repository.port.ts
+│   │   │           └── http-client.port.ts
+│   │   ├── application/                # Lógica de aplicación
+│   │   │   └── services/              # Implementa puertos de entrada
+│   │   │       └── beneficios.service.ts
+│   │   ├── adapters/                   # Adaptadores (infraestructura)
+│   │   │   ├── input/                 # Adaptadores de entrada
+│   │   │   │   └── rest/              # REST API
+│   │   │   │       ├── beneficios.controller.ts
+│   │   │   │       └── dtos/          # DTOs y validación
+│   │   │   └── output/                # Adaptadores de salida
+│   │   │       └── sportclub/         # Implementaciones Sportclub
+│   │   │           ├── sportclub-http.client.ts
+│   │   │           └── sportclub-beneficios.repository.ts
+│   │   ├── beneficios/                 # Módulo NestJS (DI)
+│   │   │   └── beneficios.module.ts
+│   │   ├── presentation/               # Filters globales
 │   │   │   └── filters/
-│   │   ├── beneficios/
 │   │   ├── app.module.ts
 │   │   └── main.ts
 │   ├── test/
@@ -448,16 +477,19 @@ sportclub/
 │   └── jest.config.js
 ├── frontend/
 │   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── store/
+│   │   ├── types/
 │   │   ├── App.tsx
-│   │   ├── App.css
-│   │   ├── main.tsx
-│   │   └── index.css
+│   │   └── main.tsx
 │   ├── public/
 │   ├── Dockerfile
 │   ├── Dockerfile.dev
 │   ├── nginx.conf
 │   ├── package.json
-│   ├── tsconfig.json
 │   └── vite.config.ts
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
@@ -465,16 +497,55 @@ sportclub/
 └── README.md
 ```
 
+## Principios Arquitectónicos (Backend)
+
+### Arquitectura Hexagonal
+
+El backend sigue estrictamente los principios de Ports & Adapters:
+
+1. **Domain (Núcleo)**
+   - Sin dependencias externas
+   - Define entidades y reglas de negocio
+   - Define interfaces (puertos) pero no implementaciones
+
+2. **Application (Casos de Uso)**
+   - Orquesta la lógica de negocio
+   - Implementa puertos de entrada (input)
+   - Depende solo de domain
+
+3. **Adapters**
+   - **Input (Entrada)**: REST API, GraphQL, CLI
+   - **Output (Salida)**: Bases de datos, APIs externas, File system
+   - Implementan puertos de salida (output)
+
+4. **Inversión de Dependencias**
+   - Domain define interfaces
+   - Adapters implementan interfaces
+   - Application usa interfaces (no implementaciones)
+
+### Flujo de Dependencias
+
+```
+Controller → ServicePort → Service → RepositoryPort → Repository → HttpClientPort → HttpClient
+  (REST)     (Interface)    (App)     (Interface)      (Adapter)    (Interface)    (Adapter)
+    ↓            ↓            ↓            ↓              ↓             ↓            ↓
+  NestJS      Domain       Domain      Domain        Sportclub      Domain       Axios
+```
+
 ## Características Implementadas
 
 ### Backend
 - [x] Endpoints GET /api/beneficios y GET /api/beneficios/:id
 - [x] Proxy/intermediario con API externa de Sportclub
-- [x] Clean Architecture (Domain, Application, Infrastructure, Presentation)
+- [x] Arquitectura Hexagonal (Ports & Adapters)
+- [x] Domain-Driven Design (DDD)
+- [x] Inversión de dependencias
+- [x] Puertos driving y driven claramente separados
+- [x] Adaptadores intercambiables
 - [x] Manejo de errores (timeouts, datos corruptos, API caída)
-- [x] Logging con contexto detallado
+- [x] Logging opcional (inyectado)
 - [x] Validación y normalización de datos
-- [x] Testing completo (35 tests, 95.23% coverage)
+- [x] Testing completo (35 tests, 100% coverage)
 - [x] Global exception filter
 - [x] Swagger/OpenAPI documentation
 - [x] CORS configurado

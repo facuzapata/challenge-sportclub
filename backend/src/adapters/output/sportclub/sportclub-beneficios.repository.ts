@@ -1,8 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Beneficio } from '../../domain/entities/beneficio.entity';
-import { IBeneficiosRepository } from '../../domain/repositories/beneficios.repository.interface';
-import { SportclubHttpClient } from '../http/sportclub-http.client';
-import { DataValidationException } from '../../domain/exceptions/domain.exceptions';
+import { Beneficio } from '../../../domain/entities/beneficio.entity';
+import { BeneficiosRepositoryPort } from '../../../domain/ports/output/beneficios.repository.port';
+import { HttpClientPort } from '../../../domain/ports/output/http-client.port';
+import { DataValidationException } from '../../../domain/exceptions/domain.exceptions';
 
 interface SportclubBeneficioDto {
     id?: number;
@@ -16,37 +15,47 @@ interface SportclubBeneficioDto {
     imagenUrl?: string;
 }
 
-@Injectable()
-export class SportclubBeneficiosRepository implements IBeneficiosRepository {
-    private readonly logger = new Logger(SportclubBeneficiosRepository.name);
-
-    constructor(private readonly httpClient: SportclubHttpClient) { }
+export class SportclubBeneficiosRepository implements BeneficiosRepositoryPort {
+    constructor(
+        private readonly httpClient: HttpClientPort,
+        private readonly logger?: { log: (msg: string) => void; error: (msg: string) => void; warn: (msg: string) => void }
+    ) { }
 
     async findAll(): Promise<Beneficio[]> {
         try {
-            this.logger.log('Fetching all beneficios from Sportclub API');
+            if (this.logger) {
+                this.logger.log('Fetching beneficios from Sportclub API');
+            }
             const data = await this.httpClient.get<SportclubBeneficioDto[]>('/beneficios');
 
             if (!Array.isArray(data)) {
-                this.logger.error('Invalid data format: expected array');
+                if (this.logger) {
+                    this.logger.error('Invalid data format: expected array');
+                }
                 throw new DataValidationException('Formato de datos inválido recibido de la API');
             }
 
             return data.map((dto) => this.mapToEntity(dto)).filter((b) => b !== null) as Beneficio[];
         } catch (error) {
-            this.logger.error(`Error fetching beneficios: ${error.message}`);
+            if (this.logger) {
+                this.logger.error(`Error fetching beneficios: ${error.message}`);
+            }
             throw error;
         }
     }
 
     async findById(id: string): Promise<Beneficio | null> {
         try {
-            this.logger.log(`Fetching beneficio with ID: ${id}`);
+            if (this.logger) {
+                this.logger.log(`Fetching beneficio ID: ${id}`);
+            }
             const data = await this.httpClient.get<SportclubBeneficioDto>(`/beneficios/${id}`);
 
             return this.mapToEntity(data);
         } catch (error) {
-            this.logger.error(`Error fetching beneficio ${id}: ${error.message}`);
+            if (this.logger) {
+                this.logger.error(`Error fetching beneficio ${id}: ${error.message}`);
+            }
 
             if (error.message.includes('404')) {
                 return null;
@@ -59,7 +68,9 @@ export class SportclubBeneficiosRepository implements IBeneficiosRepository {
     private mapToEntity(dto: SportclubBeneficioDto): Beneficio | null {
         try {
             if (!dto.id || !dto.comercio || !dto.descripcion) {
-                this.logger.warn(`Invalid beneficio data: ${JSON.stringify(dto)}`);
+                if (this.logger) {
+                    this.logger.warn(`Invalid beneficio data: ${JSON.stringify(dto)}`);
+                }
                 return null;
             }
 
@@ -75,7 +86,9 @@ export class SportclubBeneficiosRepository implements IBeneficiosRepository {
                 imagenUrl: dto.imagenUrl || '',
             };
         } catch (error) {
-            this.logger.error(`Error mapping beneficio: ${error.message}`);
+            if (this.logger) {
+                this.logger.error(`Error mapping beneficio: ${error.message}`);
+            }
             return null;
         }
     }
