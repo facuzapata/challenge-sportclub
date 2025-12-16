@@ -2,18 +2,7 @@ import { Beneficio } from '../../../domain/entities/beneficio.entity';
 import { BeneficiosRepositoryPort } from '../../../domain/ports/output/beneficios.repository.port';
 import { HttpClientPort } from '../../../domain/ports/output/http-client.port';
 import { DataValidationException } from '../../../domain/exceptions/domain.exceptions';
-
-interface SportclubBeneficioDto {
-    id?: number;
-    comercio?: string;
-    descripcion?: string;
-    aclaracion?: string;
-    tarjeta?: boolean;
-    efectivo?: boolean;
-    vencimiento?: string;
-    categoria?: string;
-    imagenUrl?: string;
-}
+import { SportclubBeneficioDto } from '../interfaces/SportclubBeneficioDto.interface';
 
 export class SportclubBeneficiosRepository implements BeneficiosRepositoryPort {
     constructor(
