@@ -5,6 +5,7 @@ import {
     HttpStatus,
     HttpException,
     Logger,
+    Inject,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -12,15 +13,14 @@ import {
     ApiResponse,
     ApiParam,
 } from '@nestjs/swagger';
-import { GetAllBeneficiosUseCase } from '../../application/use-cases/get-all-beneficios.use-case';
-import { GetBeneficioByIdUseCase } from '../../application/use-cases/get-beneficio-by-id.use-case';
-import { BeneficioResponseDto } from '../dtos/beneficio-response.dto';
-import { ErrorResponseDto } from '../dtos/error-response.dto';
+import { BeneficiosServicePort } from '../../../domain/ports/input/beneficios.service.port';
+import { BeneficioResponseDto } from './dtos/beneficio-response.dto';
+import { ErrorResponseDto } from './dtos/error-response.dto';
 import {
     BeneficioNotFoundException,
     ExternalApiException,
     DataValidationException,
-} from '../../domain/exceptions/domain.exceptions';
+} from '../../../domain/exceptions/domain.exceptions';
 
 @ApiTags('beneficios')
 @Controller('api/beneficios')
@@ -28,8 +28,8 @@ export class BeneficiosController {
     private readonly logger = new Logger(BeneficiosController.name);
 
     constructor(
-        private readonly getAllBeneficiosUseCase: GetAllBeneficiosUseCase,
-        private readonly getBeneficioByIdUseCase: GetBeneficioByIdUseCase,
+        @Inject('BeneficiosServicePort')
+        private readonly beneficiosService: BeneficiosServicePort,
     ) { }
 
     @Get()
@@ -54,12 +54,12 @@ export class BeneficiosController {
     })
     async findAll(): Promise<BeneficioResponseDto[]> {
         try {
-            this.logger.log('GET /api/beneficios - Fetching all beneficios');
-            const beneficios = await this.getAllBeneficiosUseCase.execute();
-            this.logger.log(`Successfully fetched ${beneficios.length} beneficios`);
+            this.logger.log('GET /api/beneficios');
+            const beneficios = await this.beneficiosService.getAllBeneficios();
+            this.logger.log(`Fetched ${beneficios.length} beneficios`);
             return beneficios;
         } catch (error) {
-            this.logger.error(`Error fetching beneficios: ${error.message}`, error.stack);
+            this.logger.error(`Error: ${error.message}`, error.stack);
             this.handleError(error);
         }
     }
@@ -91,12 +91,12 @@ export class BeneficiosController {
     })
     async findOne(@Param('id') id: string): Promise<BeneficioResponseDto> {
         try {
-            this.logger.log(`GET /api/beneficios/${id} - Fetching beneficio`);
-            const beneficio = await this.getBeneficioByIdUseCase.execute(id);
-            this.logger.log(`Successfully fetched beneficio ${id}`);
+            this.logger.log(`GET /api/beneficios/${id}`);
+            const beneficio = await this.beneficiosService.getBeneficioById(id);
+            this.logger.log(`Fetched beneficio ${id}`);
             return beneficio;
         } catch (error) {
-            this.logger.error(`Error fetching beneficio ${id}: ${error.message}`, error.stack);
+            this.logger.error(`Error: ${error.message}`, error.stack);
             this.handleError(error);
         }
     }
@@ -135,7 +135,6 @@ export class BeneficiosController {
             );
         }
 
-        // Generic error
         throw new HttpException(
             {
                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

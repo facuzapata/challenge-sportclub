@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './presentation/filters/all-exceptions.filter';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -8,16 +7,11 @@ async function bootstrap() {
     const logger = new Logger('Bootstrap');
     const app = await NestFactory.create(AppModule);
 
-    // Enable CORS
     app.enableCors({
         origin: process.env.FRONTEND_URL || 'http://localhost:3001',
         credentials: true,
     });
 
-    // Global filters
-    app.useGlobalFilters(new AllExceptionsFilter());
-
-    // Global pipes
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,
@@ -26,7 +20,6 @@ async function bootstrap() {
         }),
     );
 
-    // Swagger Configuration
     const config = new DocumentBuilder()
         .setTitle('Sportclub API')
         .setDescription('API proxy para beneficios de Sportclub')

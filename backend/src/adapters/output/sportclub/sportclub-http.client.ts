@@ -1,17 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { ExternalApiException } from '../../domain/exceptions/domain.exceptions';
+import { HttpClientPort } from '../../../domain/ports/output/http-client.port';
+import { ExternalApiException } from '../../../domain/exceptions/domain.exceptions';
 
-@Injectable()
-export class SportclubHttpClient {
-    private readonly logger = new Logger(SportclubHttpClient.name);
+const NullLogger = {
+    log: () => { },
+    error: () => { },
+};
+
+export class SportclubHttpClient implements HttpClientPort {
     private readonly axiosInstance: AxiosInstance;
+    private readonly logger: { log: (msg: string) => void; error: (msg: string) => void };
 
-    constructor(private readonly configService: ConfigService) {
-        const baseURL = this.configService.get<string>('SPORTCLUB_API_URL');
-        const timeout = this.configService.get<number>('API_TIMEOUT', 10000);
-
+    constructor(
+        private readonly baseURL: string,
+        private readonly timeout: number = 10000,
+        logger?: { log: (msg: string) => void; error: (msg: string) => void }
+    ) {
+        this.logger = logger ?? NullLogger;
         this.logger.log(`Initializing HTTP Client with baseURL: ${baseURL}, timeout: ${timeout}ms`);
 
         this.axiosInstance = axios.create({
@@ -24,19 +29,17 @@ export class SportclubHttpClient {
             },
         });
 
-        // Request interceptor
         this.axiosInstance.interceptors.request.use(
             (config) => {
                 this.logger.log(`Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
                 return config;
             },
             (error) => {
-                this.logger.error('Request error:', error);
+                this.logger.error('Request error: ' + error);
                 return Promise.reject(error);
             },
         );
 
-        // Response interceptor
         this.axiosInstance.interceptors.response.use(
             (response) => {
                 this.logger.log(`Response: ${response.status} ${response.config.url}`);
